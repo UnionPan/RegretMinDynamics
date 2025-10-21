@@ -150,5 +150,21 @@ The game has a special "golden outcome" [1, 1, 0] where all players get +1 (Pare
 ## Output
 
 Generates GIF visualizations in the `visualizations/` directory:
-- 3-player games: 3D cube showing strategy evolution
+- 3-player games: 3D cube showing strategy evolution with Nash equilibria marked as gold stars
 - 2-player games: Side-by-side simplex triangles for each player
+
+### Example Visualizations
+
+**3-Player Games (3D Strategy Cube)**
+
+The visualizations show:
+- **Trajectories**: Colored paths showing how strategies evolve over time (fading from dark to bright)
+- **Nash Equilibria**: Gold star markers (★) indicating theoretical equilibrium points
+
+Example: OptFTRL algorithm
+
+![MatchingPenniesWithOutsideOption_OptFTRL](MatchingPenniesWithOutsideOption_OptFTRL.gif)
+
+
+**2-Player RPS Games (Simplex Triangle)**
+
