@@ -168,3 +168,4 @@ Example: OptFTRL algorithm
 
 **2-Player RPS Games (Simplex Triangle)**
 
+![RPS_AllAlgorithms_2player_simplex](RPS_AllAlgorithms_2player_simplex.gif)
