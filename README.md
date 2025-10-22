@@ -2,6 +2,15 @@
 
 Simulation framework for analyzing regret minimization algorithms in multi-player games.
 
+Example: OptFTRL algorithm
+
+![MatchingPenniesWithOutsideOption_OptFTRL](MatchingPenniesWithOutsideOption_OptFTRL.gif)
+
+
+**2-Player RPS Games (Simplex Triangle)**
+
+![RPS_AllAlgorithms_2player_simplex](RPS_AllAlgorithms_2player_simplex.gif)
+
 ## Installation
 
 ```bash
@@ -161,11 +170,3 @@ The visualizations show:
 - **Trajectories**: Colored paths showing how strategies evolve over time (fading from dark to bright)
 - **Nash Equilibria**: Gold star markers (★) indicating theoretical equilibrium points
 
-Example: OptFTRL algorithm
-
-![MatchingPenniesWithOutsideOption_OptFTRL](MatchingPenniesWithOutsideOption_OptFTRL.gif)
-
-
-**2-Player RPS Games (Simplex Triangle)**
-
-![RPS_AllAlgorithms_2player_simplex](RPS_AllAlgorithms_2player_simplex.gif)
