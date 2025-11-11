@@ -15,6 +15,8 @@ class BFTL_EXP3:
     def run(self, initial_scores=None):
         if initial_scores:
             self.scores = initial_scores
+            # Update num_actions based on the provided initial_scores
+            self.num_actions = [len(s) for s in initial_scores]
 
         for n in range(self.num_iterations):
             eta = self.eta_config['initial_eta'] * (n + 1) ** self.eta_config['decay_rate']
