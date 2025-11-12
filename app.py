@@ -43,6 +43,46 @@ rps_game_options = {
     "Noisy Rock Paper Scissors": RockPaperScissorsWithNoise,
 }
 
+# Game descriptions
+game_descriptions = {
+    "Pure Coordination": "**3-player coordination game** where players receive rewards only when all coordinate on the same action. Features 4 pure Nash equilibria at corners of the strategy cube. Tests convergence to coordination points.",
+
+    "Coordination with Spectator": "**Asymmetric 3-player game** where Players 1 & 2 must coordinate for rewards while Player 3 is a spectator (always receives 0). Features equilibrium edges along P3's action dimension. Tests algorithm behavior with inactive players.",
+
+    "Matching Pennies with Twist": "**Mixed-motive game** where Player 1 has a dominant strategy (always choosing action 1 gives +0.1), while Players 2 & 3 engage in matching pennies. Tests convergence when dominant strategies exist.",
+
+    "Matching Pennies with Outside Option": "**Complex strategic game** with both competitive and cooperative elements. Features a Pareto optimal outcome [1,1,0] where all players get +1, but reaching it requires P1 & P2 to coordinate while P3 takes the 'outside option'. No pure Nash equilibrium.",
+
+    "Rock Paper Scissors": "**Classic zero-sum game** where each action beats one and loses to one. Symmetric payoffs with unique Nash equilibrium at uniform mixing (1/3, 1/3, 1/3). Pure competition between 2 players.",
+
+    "Biased Rock Paper Scissors": "**Non-zero-sum variant** where Rock receives a bonus (+0.2) when beating Scissors. Equilibrium shifts toward Rock play. Tests algorithm response to asymmetric incentives.",
+
+    "Asymmetric Rock Paper Scissors": "**Asymmetric payoffs** where Player 1 gets standard payoffs but Player 2's are scaled (×0.7). Different incentive structures for each player. Tests behavior in non-symmetric games.",
+
+    "Noisy Rock Paper Scissors": "**Stochastic variant** with Gaussian noise (σ=0.1) added to all payoffs. Same equilibrium as standard RPS but harder to learn due to noisy feedback. Tests robustness to uncertainty.",
+}
+
+# Algorithm descriptions
+algorithm_descriptions = {
+    "BFTL-EXP3": "**Bandit Follow-the-Leader with EXP3**: Combines optimistic predictions with exploration bonuses. Uses decaying learning rate (η) and exploration parameter (δ). Good for adversarial settings with partial feedback.",
+
+    "EXP3": "**Exponential-weight algorithm for Exploration and Exploitation**: Multiplicative weights with explicit exploration. Maintains no-regret guarantees in adversarial environments. Uses importance sampling for unobserved actions.",
+
+    "Fictitious Play": "**Classic best-response dynamics**: Each player best-responds to empirical frequency of opponent's historical play. Converges in zero-sum games but may cycle in general games. No explicit exploration.",
+
+    "Smooth FP (T=0.1)": "**Smooth Fictitious Play with temperature 0.1**: Softmax best-response with low temperature (near-deterministic). Smoother trajectories than pure FP. Better stability in non-convergent games.",
+
+    "Hedge": "**Multiplicative weights algorithm**: Updates strategies proportionally to exponential of cumulative payoffs. Parameter-free variant with optimal regret bounds. Fast convergence in stationary games.",
+
+    "Optimistic FTRL": "**Optimistic Follow-The-Regularized-Leader**: Uses gradient predictions to 'look ahead' before updating. Achieves faster convergence in games with structure. Effective against adaptive opponents.",
+
+    "Projected Gradient Ascent": "**First-order optimization**: Performs gradient ascent on expected utility, then projects back to probability simplex. Simple and interpretable. Works well when game is smooth.",
+
+    "Regret Matching": "**Proportional to positive regrets**: Strategies proportional to positive cumulative regrets for each action. Guaranteed convergence to correlated equilibrium in general games. No learning rate needed.",
+
+    "Regret Matching Softmax": "**Smoothed regret matching**: Applies softmax to regrets with temperature parameter. Smoother updates than standard RM. Balances exploration vs exploitation via temperature.",
+}
+
 # Select appropriate games based on mode
 if mode == "Box Games":
     game_options = box_game_options
@@ -294,8 +334,8 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
     num_steps = len(trajectories[0])
     frames = []
 
-    # Sample frames (every 10 steps)
-    frame_indices = list(range(0, num_steps, 10))
+    # Sample frames (every 5 steps for smoother animation)
+    frame_indices = list(range(0, num_steps, 5))
     if frame_indices[-1] != num_steps - 1:
         frame_indices.append(num_steps - 1)
 
@@ -355,21 +395,29 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
                     y=y,
                     z=z,
                     mode='lines',
-                    line=dict(color=traj_color, width=4),
+                    line=dict(
+                        color=traj_color,
+                        width=5
+                    ),
                     name=f'Trajectory {traj_idx+1}' if len(trajectories) > 1 else 'Trajectory',
                     showlegend=(t == frame_indices[0]),
                     legendgroup=f'traj{traj_idx}',
                     hovertemplate=f'Trajectory {traj_idx+1}<br>P1: %{{x:.3f}}<br>P2: %{{y:.3f}}<br>P3: %{{z:.3f}}<extra></extra>'
                 ))
 
-                # Add current position marker
+                # Add current position marker with glow effect
                 frame_data.append(go.Scatter3d(
                     x=[x[-1]],
                     y=[y[-1]],
                     z=[z[-1]],
                     mode='markers',
-                    marker=dict(size=8, color=traj_color, symbol='circle',
-                               line=dict(color='white', width=1)),
+                    marker=dict(
+                        size=10,
+                        color=traj_color,
+                        symbol='circle',
+                        line=dict(color='white', width=2),
+                        opacity=0.9
+                    ),
                     showlegend=False,
                     legendgroup=f'traj{traj_idx}',
                     hovertemplate=f'Trajectory {traj_idx+1}<br>t={t}<br>P1: %{{x:.3f}}<br>P2: %{{y:.3f}}<br>P3: %{{z:.3f}}<extra></extra>'
@@ -401,7 +449,10 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
         fig.add_trace(go.Scatter3d(
             x=x, y=y, z=z,
             mode='lines',
-            line=dict(color=traj_color, width=4),
+            line=dict(
+                color=traj_color,
+                width=5
+            ),
             name=f'Trajectory {traj_idx+1}' if len(trajectories) > 1 else 'Trajectory',
             legendgroup=f'traj{traj_idx}',
             hovertemplate=f'Trajectory {traj_idx+1}<br>P1: %{{x:.3f}}<br>P2: %{{y:.3f}}<br>P3: %{{z:.3f}}<extra></extra>'
@@ -411,8 +462,13 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
         fig.add_trace(go.Scatter3d(
             x=x, y=y, z=z,
             mode='markers',
-            marker=dict(size=8, color=traj_color, symbol='circle',
-                       line=dict(color='white', width=1)),
+            marker=dict(
+                size=10,
+                color=traj_color,
+                symbol='circle',
+                line=dict(color='white', width=2),
+                opacity=0.9
+            ),
             showlegend=False,
             legendgroup=f'traj{traj_idx}',
             hovertemplate=f'Trajectory {traj_idx+1}<br>t=0<br>P1: %{{x:.3f}}<br>P2: %{{y:.3f}}<br>P3: %{{z:.3f}}<extra></extra>'
@@ -430,7 +486,19 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
             zaxis=dict(title='Player 3 - P(Action 0)', range=[0, 1]),
             camera=dict(
                 eye=dict(x=1.8, y=0.7, z=0.35)  # Matches main.py: elevation=10, azimuth=22
-            )
+            ),
+            aspectmode='cube'  # Ensure proper aspect ratio
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(30, 30, 30, 0.9)",
+            font=dict(color="white"),
+            bordercolor="rgba(100, 100, 100, 0.5)",
+            borderwidth=1
         ),
         updatemenus=[{
             'type': 'buttons',
@@ -440,10 +508,10 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
                     'label': 'Play',
                     'method': 'animate',
                     'args': [None, {
-                        'frame': {'duration': 100, 'redraw': True},
+                        'frame': {'duration': 50, 'redraw': True},
                         'fromcurrent': True,
                         'mode': 'immediate',
-                        'transition': {'duration': 50, 'easing': 'linear'}
+                        'transition': {'duration': 30, 'easing': 'cubic-in-out'}
                     }]
                 },
                 {
@@ -488,8 +556,10 @@ def create_3d_cube_animation_plotly(trajectories, game_name, algorithm_name, equ
                 'font': {'size': 16}
             }
         }],
+        autosize=True,
         height=700,
-        hovermode='closest'
+        hovermode='closest',
+        margin=dict(l=0, r=0, t=80, b=0)
     )
 
     return fig
@@ -547,22 +617,22 @@ def create_comparison_animation(trajectories_dict, game_name, num_iterations):
 
 def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterations):
     """
-    Create interactive side-by-side simplex plots for RPS game comparison using Plotly.
+    Create interactive vertically-stacked simplex plots for RPS game comparison using Plotly.
     Returns a Plotly figure object that can be displayed with st.plotly_chart().
     """
-    # Create subplots: 1 row, 2 columns
+    # Create subplots: 2 rows, 1 column (vertical stack)
     fig = make_subplots(
-        rows=1, cols=2,
+        rows=2, cols=1,
         subplot_titles=("Player 1 Strategy", "Player 2 Strategy"),
-        specs=[[{"type": "xy"}, {"type": "xy"}]],
-        horizontal_spacing=0.12
+        specs=[[{"type": "xy"}], [{"type": "xy"}]],
+        vertical_spacing=0.15
     )
 
     # Simplex triangle vertices in 2D
     simplex_points = barycentric_to_cartesian(np.eye(3))
 
     # Add simplex triangles to both subplots
-    for col in [1, 2]:
+    for row in [1, 2]:
         # Triangle filled area (white)
         fig.add_trace(go.Scatter(
             x=np.append(simplex_points[:, 0], simplex_points[0, 0]),
@@ -573,7 +643,7 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
             line=dict(color='black', width=2),
             showlegend=False,
             hoverinfo='skip'
-        ), row=1, col=col)
+        ), row=row, col=1)
 
         # Labels
         labels = ["Rock", "Paper", "Scissors"]
@@ -585,16 +655,23 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 text=label,
                 showarrow=False,
                 font=dict(size=12),
-                row=1, col=col
+                row=row, col=1
             )
 
-    # Prepare animation frames
+    # Prepare animation frames (every 10 steps for balanced performance)
     frame_indices = list(range(0, num_iterations, 10))
     if frame_indices[-1] != num_iterations - 1:
         frame_indices.append(num_iterations - 1)
 
-    # Color palette for different algorithms
-    colors = ['blue', 'red', 'green', 'purple', 'orange', 'brown']
+    # Color palette for different algorithms (vibrant, modern colors)
+    colors = [
+        'rgb(0, 114, 189)',     # Deep blue
+        'rgb(217, 83, 25)',     # Vibrant orange-red
+        'rgb(0, 166, 81)',      # Emerald green
+        'rgb(156, 39, 176)',    # Purple
+        'rgb(255, 152, 0)',     # Amber
+        'rgb(96, 125, 139)'     # Blue grey
+    ]
     algo_colors = {algo: colors[i % len(colors)] for i, algo in enumerate(trajectories_dict.keys())}
 
     frames = []
@@ -604,7 +681,7 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
         frame_data = []
 
         # Add simplex triangles to each frame (both subplots)
-        for col_idx in range(2):
+        for row_idx in range(2):
             # Triangle filled area (white)
             frame_data.append(go.Scatter(
                 x=np.append(simplex_points[:, 0], simplex_points[0, 0]),
@@ -615,20 +692,25 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 line=dict(color='black', width=2),
                 showlegend=False,
                 hoverinfo='skip',
-                xaxis='x' if col_idx == 0 else 'x2',
-                yaxis='y' if col_idx == 0 else 'y2'
+                xaxis='x' if row_idx == 0 else 'x2',
+                yaxis='y' if row_idx == 0 else 'y2'
             ))
 
         # Add trajectories for each algorithm
         for algo_name, strategies in trajectories_dict.items():
-            # Player 1 trajectory
+            # Player 1 trajectory (top subplot)
             coords1 = barycentric_to_cartesian(strategies[:t+1, 0, :])
             frame_data.append(go.Scatter(
                 x=coords1[:, 0],
                 y=coords1[:, 1],
                 mode='lines+markers',
-                line=dict(color=algo_colors[algo_name], width=2),
-                marker=dict(size=4),
+                line=dict(
+                    color=algo_colors[algo_name],
+                    width=2.5,
+                    shape='spline',
+                    smoothing=1.3
+                ),
+                marker=dict(size=3, opacity=0.8),
                 name=algo_name,
                 showlegend=True,
                 legendgroup=algo_name,
@@ -638,14 +720,19 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 yaxis='y'
             ))
 
-            # Player 2 trajectory
+            # Player 2 trajectory (bottom subplot)
             coords2 = barycentric_to_cartesian(strategies[:t+1, 1, :])
             frame_data.append(go.Scatter(
                 x=coords2[:, 0],
                 y=coords2[:, 1],
                 mode='lines+markers',
-                line=dict(color=algo_colors[algo_name], width=2),
-                marker=dict(size=4),
+                line=dict(
+                    color=algo_colors[algo_name],
+                    width=2.5,
+                    shape='spline',
+                    smoothing=1.3
+                ),
+                marker=dict(size=3, opacity=0.8),
                 name=algo_name,
                 showlegend=False,
                 legendgroup=algo_name,
@@ -659,53 +746,72 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
 
     # Add initial trajectories (t=0) to the figure
     for algo_name, strategies in trajectories_dict.items():
-        # Player 1 initial point
+        # Player 1 initial point (top subplot)
         coords1 = barycentric_to_cartesian(strategies[0:1, 0, :])
         fig.add_trace(go.Scatter(
             x=coords1[:, 0],
             y=coords1[:, 1],
             mode='lines+markers',
-            line=dict(color=algo_colors[algo_name], width=2),
-            marker=dict(size=4),
+            line=dict(
+                color=algo_colors[algo_name],
+                width=2.5,
+                shape='spline',
+                smoothing=1.3
+            ),
+            marker=dict(size=3, opacity=0.8),
             name=algo_name,
             legendgroup=algo_name,
             hovertemplate=f'{algo_name}<br>R: %{{customdata[0]:.3f}}<br>P: %{{customdata[1]:.3f}}<br>S: %{{customdata[2]:.3f}}<extra></extra>',
             customdata=strategies[0:1, 0, :]
         ), row=1, col=1)
 
-        # Player 2 initial point
+        # Player 2 initial point (bottom subplot)
         coords2 = barycentric_to_cartesian(strategies[0:1, 1, :])
         fig.add_trace(go.Scatter(
             x=coords2[:, 0],
             y=coords2[:, 1],
             mode='lines+markers',
-            line=dict(color=algo_colors[algo_name], width=2),
-            marker=dict(size=4),
+            line=dict(
+                color=algo_colors[algo_name],
+                width=2.5,
+                shape='spline',
+                smoothing=1.3
+            ),
+            marker=dict(size=3, opacity=0.8),
             name=algo_name,
             showlegend=False,
             legendgroup=algo_name,
             hovertemplate=f'{algo_name}<br>R: %{{customdata[0]:.3f}}<br>P: %{{customdata[1]:.3f}}<br>S: %{{customdata[2]:.3f}}<extra></extra>',
             customdata=strategies[0:1, 1, :]
-        ), row=1, col=2)
+        ), row=2, col=1)
 
     # Add frames to figure
     fig.frames = frames
 
     # Update layout
     fig.update_layout(
-        title=f'{game_name} - Algorithm Comparison',
+        title=dict(
+            text=f'{game_name} - Algorithm Comparison',
+            font=dict(size=20, color='rgb(50, 50, 50)'),
+            x=0.5,
+            xanchor='center'
+        ),
         updatemenus=[{
             'type': 'buttons',
             'showactive': False,
+            'bgcolor': 'rgba(240, 240, 240, 0.95)',
+            'bordercolor': 'rgba(100, 100, 100, 0.5)',
+            'borderwidth': 1,
+            'font': dict(color='rgb(30, 30, 30)', size=12),
             'buttons': [
                 {
                     'label': 'Play',
                     'method': 'animate',
                     'args': [None, {
-                        'frame': {'duration': 100, 'redraw': True},
+                        'frame': {'duration': 50, 'redraw': True},
                         'fromcurrent': True,
                         'mode': 'immediate',
-                        'transition': {'duration': 50}
+                        'transition': {'duration': 30, 'easing': 'cubic-in-out'}
                     }]
                 },
                 {
@@ -718,9 +824,9 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                     }]
                 }
             ],
-            'x': 0.5,
+            'x': 0.95,
             'y': 1.15,
-            'xanchor': 'center',
+            'xanchor': 'right',
             'yanchor': 'top'
         }],
         sliders=[{
@@ -750,16 +856,30 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 'font': {'size': 16}
             }
         }],
-        height=600,
+        autosize=True,
+        height=1000,  # Increased height for vertical stack
         hovermode='closest',
-        margin=dict(t=100, b=100)
+        margin=dict(l=20, r=20, t=100, b=100),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.05,
+            bgcolor="rgba(30, 30, 30, 0.9)",
+            bordercolor="rgba(100, 100, 100, 0.5)",
+            borderwidth=1,
+            font=dict(size=12, color="white")
+        )
     )
 
     # Update axes to be equal aspect ratio and hide grid
+    # Top subplot (Player 1)
     fig.update_xaxes(showgrid=False, showticklabels=False, zeroline=False, scaleanchor="y", scaleratio=1, row=1, col=1)
     fig.update_yaxes(showgrid=False, showticklabels=False, zeroline=False, row=1, col=1)
-    fig.update_xaxes(showgrid=False, showticklabels=False, zeroline=False, scaleanchor="y2", scaleratio=1, row=1, col=2)
-    fig.update_yaxes(showgrid=False, showticklabels=False, zeroline=False, row=1, col=2)
+    # Bottom subplot (Player 2)
+    fig.update_xaxes(showgrid=False, showticklabels=False, zeroline=False, scaleanchor="y2", scaleratio=1, row=2, col=1)
+    fig.update_yaxes(showgrid=False, showticklabels=False, zeroline=False, row=2, col=1)
 
     return fig
 
@@ -772,6 +892,13 @@ if mode == "Box Games":
     st.sidebar.header("Display Options")
     show_play_info = st.sidebar.checkbox("Show Iterative Play Information")
     show_strategy_plot = st.sidebar.checkbox("Show Strategy Evolution Plot")
+
+    # Display game and algorithm descriptions
+    st.subheader("📋 Game Description")
+    st.info(game_descriptions[selected_game_name])
+
+    st.subheader("🤖 Algorithm Description")
+    st.info(algorithm_descriptions[selected_algo_name])
 
     if st.sidebar.button("Run Simulation"):
         game_class = game_options[selected_game_name]
@@ -813,7 +940,7 @@ if mode == "Box Games":
         # Generate 3D cube visualization for Box Games
         st.write("Generating interactive 3D animation...")
         fig = create_3d_cube_animation_plotly(trajectories, selected_game_name, selected_algo_name, equilibria=equilibria)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch', config={'responsive': True, 'displayModeBar': True, 'displaylogo': False})
 
         # Show additional information if requested
         if show_play_info:
@@ -892,13 +1019,24 @@ if mode == "Box Games":
             fig_evolution.update_yaxes(title_text="P(Action 0)", range=[0, 1], row=1, col=2)
             fig_evolution.update_yaxes(title_text="P(Action 0)", range=[0, 1], row=1, col=3)
 
-            fig_evolution.update_layout(height=400, hovermode='x unified')
-            st.plotly_chart(fig_evolution, use_container_width=True)
+            fig_evolution.update_layout(height=400, hovermode='x unified', autosize=True)
+            st.plotly_chart(fig_evolution, width='stretch', config={'responsive': True, 'displayModeBar': True, 'displaylogo': False})
 
 else:  # RPS Games
     selected_game_name = st.sidebar.selectbox("Choose a game", list(game_options.keys()))
     selected_algos = st.sidebar.multiselect("Choose algorithms to compare", list(algorithm_options.keys()))
     num_iterations = st.sidebar.number_input("Number of Iterations", 100, 100000, 1000)
+
+    # Display game description
+    st.subheader("📋 Game Description")
+    st.info(game_descriptions[selected_game_name])
+
+    # Display algorithm descriptions for selected algorithms
+    if selected_algos:
+        st.subheader("🤖 Algorithm Descriptions")
+        for algo in selected_algos:
+            with st.expander(f"**{algo}**"):
+                st.write(algorithm_descriptions[algo])
 
     if st.sidebar.button("Run Comparison"):
         if not selected_algos:
@@ -924,7 +1062,7 @@ else:  # RPS Games
 
             st.write("Generating interactive comparison animation...")
             fig = create_comparison_animation_plotly(trajectories_dict, selected_game_name, num_iterations)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch', config={'responsive': True, 'displayModeBar': True, 'displaylogo': False})
 
 if 'mode' not in st.session_state:
     st.session_state.mode = "Box Games"
