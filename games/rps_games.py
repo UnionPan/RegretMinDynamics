@@ -43,18 +43,18 @@ class BiasedRockPaperScissors:
         # Payoff matrix: [p1_action, p2_action, player]
         self.payoff_matrix = np.zeros((3, 3, 2))
 
-        # Base payoffs
+        # Base payoffs for Player 1
         p1_payoffs = np.array([
-            [ 0, -1,  1 + rock_bonus],  # Rock (bonus when beating Scissors)
+            [ 0, -1,  1 + rock_bonus],   # Rock (bonus when beating Scissors)
             [ 1,  0, -1],                # Paper
-            [-1,  1,  0]                 # Scissors
+            [-1 - rock_bonus,  1,  0]    # Scissors (loses more to Rock)
         ])
 
-        # Player 2 sees the opposite (with Rock bonus)
+        # Player 2 payoffs (zero-sum, symmetric game)
         p2_payoffs = np.array([
-            [ 0,  1, -1],                # Rock
-            [-1,  0,  1],                # Paper
-            [-1 - rock_bonus, -1, 0]     # Scissors (loses more to Rock)
+            [ 0,  1, -1 - rock_bonus],   # When P1 plays Rock
+            [-1,  0,  1],                # When P1 plays Paper
+            [ 1 + rock_bonus, -1,  0]    # When P1 plays Scissors (Rock bonus applies)
         ])
 
         self.payoff_matrix[:, :, 0] = p1_payoffs
@@ -168,3 +168,134 @@ class RockPaperScissorsWithNoise:
         # Add independent noise to each player
         noise = np.random.normal(0, self.noise_level, size=2)
         return base_payoffs + noise
+
+
+class RockPaperScissorsWell:
+    """
+    Rock-Paper-Scissors-Well (4 actions)
+    Actions: 0=Rock, 1=Paper, 2=Scissors, 3=Well
+
+    Rules:
+    - Standard RPS for Rock, Paper, Scissors
+    - Well beats Rock and Scissors (contains them)
+    - Paper beats Well (covers it)
+    """
+    def __init__(self):
+        self.num_players = 2
+        self.num_actions = [4, 4]
+        self.name = "RPSW"
+
+        # Payoff matrix: [p1_action, p2_action, player]
+        self.payoff_matrix = np.zeros((4, 4, 2))
+
+        # Player 1 payoffs
+        p1_payoffs = np.array([
+            [ 0, -1,  1, -1],  # Rock: beats Scissors, loses to Paper, Well
+            [ 1,  0, -1,  1],  # Paper: beats Rock, Well, loses to Scissors
+            [-1,  1,  0, -1],  # Scissors: beats Paper, loses to Rock, Well
+            [ 1, -1,  1,  0]   # Well: beats Rock, Scissors, loses to Paper
+        ])
+
+        self.payoff_matrix[:, :, 0] = p1_payoffs
+        self.payoff_matrix[:, :, 1] = -p1_payoffs  # Zero-sum game
+
+    def get_payoff(self, actions):
+        """Returns payoffs for both players given their actions."""
+        return self.payoff_matrix[actions[0], actions[1]]
+
+
+class CyclicGame:
+    """
+    Generalized Cyclic Game with n actions.
+    Action i beats action (i+1) mod n and loses to action (i-1) mod n.
+    Creates a perfect cycle.
+    """
+    def __init__(self, n_actions=4):
+        self.num_players = 2
+        self.num_actions = [n_actions, n_actions]
+        self.n_actions = n_actions
+        self.name = f"Cyclic{n_actions}"
+
+        # Payoff matrix: [p1_action, p2_action, player]
+        self.payoff_matrix = np.zeros((n_actions, n_actions, 2))
+
+        # Player 1 payoffs - cyclic structure
+        p1_payoffs = np.zeros((n_actions, n_actions))
+        for i in range(n_actions):
+            for j in range(n_actions):
+                if i == j:
+                    p1_payoffs[i, j] = 0  # Tie
+                elif (i + 1) % n_actions == j:
+                    p1_payoffs[i, j] = -1  # i loses to i+1
+                elif (j + 1) % n_actions == i:
+                    p1_payoffs[i, j] = 1  # i beats j+1 (i.e., j loses to j+1)
+
+        self.payoff_matrix[:, :, 0] = p1_payoffs
+        self.payoff_matrix[:, :, 1] = -p1_payoffs  # Zero-sum game
+
+    def get_payoff(self, actions):
+        """Returns payoffs for both players given their actions."""
+        return self.payoff_matrix[actions[0], actions[1]]
+
+
+class MinorityGame:
+    """
+    Minority Game (El Farol Bar Problem variant)
+    2-player, 2-action game where players want to be in the minority.
+
+    Actions: 0=Option A, 1=Option B
+    Payoff: +1 if in minority, -1 if in majority, 0 if tied
+
+    This game has no pure or mixed Nash equilibrium in the traditional sense,
+    leading to perpetual oscillations and potentially chaotic dynamics.
+    """
+    def __init__(self):
+        self.num_players = 2
+        self.num_actions = [2, 2]
+        self.name = "MinorityGame"
+
+        # Payoff matrix: [p1_action, p2_action, player]
+        self.payoff_matrix = np.zeros((2, 2, 2))
+
+        # Different choices - both in minority/majority (doesn't apply in 2-player)
+        # In 2-player version: different = good, same = bad
+        self.payoff_matrix[0, 0] = [-1, -1]  # Both choose A - both penalized
+        self.payoff_matrix[1, 1] = [-1, -1]  # Both choose B - both penalized
+        self.payoff_matrix[0, 1] = [1, 1]    # Different - both rewarded
+        self.payoff_matrix[1, 0] = [1, 1]    # Different - both rewarded
+
+    def get_payoff(self, actions):
+        """Returns payoffs for both players given their actions."""
+        return self.payoff_matrix[actions[0], actions[1]]
+
+
+class DispersionGame:
+    """
+    Dispersion Game (3 actions)
+    Players prefer to choose different actions from opponent.
+    Like Minority Game but with 3 options.
+
+    Actions: 0, 1, 2
+    Payoff: Higher reward for choosing less popular option
+    """
+    def __init__(self):
+        self.num_players = 2
+        self.num_actions = [3, 3]
+        self.name = "DispersionGame"
+
+        # Payoff matrix: [p1_action, p2_action, player]
+        self.payoff_matrix = np.zeros((3, 3, 2))
+
+        # Diagonal (same choice) - both get -1
+        for i in range(3):
+            self.payoff_matrix[i, i] = [-1, -1]
+
+        # Off-diagonal (different choice) - both get +1
+        for i in range(3):
+            for j in range(3):
+                if i != j:
+                    self.payoff_matrix[i, j] = [1, 1]
+
+    def get_payoff(self, actions):
+        """Returns payoffs for both players given their actions."""
+        return self.payoff_matrix[actions[0], actions[1]]

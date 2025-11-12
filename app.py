@@ -9,8 +9,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # Import game classes
-from games.implemented_games import PureCoordination, CoordinationWithSpectator, MatchingPenniesWithTwist, MatchingPenniesWithOutsideOption
-from games.rps_games import RockPaperScissors, BiasedRockPaperScissors, AsymmetricRockPaperScissors, RockPaperScissorsWithNoise
+from games.implemented_games import (
+    PureCoordination, CoordinationWithSpectator, MatchingPenniesWithTwist, MatchingPenniesWithOutsideOption,
+    ThreePlayerPrisonersDilemma, PublicGoodsGame, VolunteersDilemma, MajorityGame, ThreePlayerHawkDove, StagHunt
+)
+from games.rps_games import (
+    RockPaperScissors, BiasedRockPaperScissors, AsymmetricRockPaperScissors, RockPaperScissorsWithNoise,
+    RockPaperScissorsLizardSpock, RockPaperScissorsWell, CyclicGame, MinorityGame, DispersionGame
+)
 
 # Import algorithm classes
 from algorithms.b_ftrl_exp3 import BFTL_EXP3
@@ -34,6 +40,12 @@ box_game_options = {
     "Coordination with Spectator": CoordinationWithSpectator,
     "Matching Pennies with Twist": MatchingPenniesWithTwist,
     "Matching Pennies with Outside Option": MatchingPenniesWithOutsideOption,
+    "3-Player Prisoner's Dilemma": ThreePlayerPrisonersDilemma,
+    "Public Goods Game": PublicGoodsGame,
+    "Volunteer's Dilemma": VolunteersDilemma,
+    "Majority Game": MajorityGame,
+    "Hawk-Dove Game": ThreePlayerHawkDove,
+    "Stag Hunt": StagHunt,
 }
 
 rps_game_options = {
@@ -41,6 +53,13 @@ rps_game_options = {
     "Biased Rock Paper Scissors": BiasedRockPaperScissors,
     "Asymmetric Rock Paper Scissors": AsymmetricRockPaperScissors,
     "Noisy Rock Paper Scissors": RockPaperScissorsWithNoise,
+    "Rock Paper Scissors Lizard Spock": RockPaperScissorsLizardSpock,
+    "Rock Paper Scissors Well": RockPaperScissorsWell,
+    "Cyclic Game (4 actions)": lambda: CyclicGame(4),
+    "Cyclic Game (5 actions)": lambda: CyclicGame(5),
+    "Cyclic Game (6 actions)": lambda: CyclicGame(6),
+    "Minority Game": MinorityGame,
+    "Dispersion Game": DispersionGame,
 }
 
 # Game descriptions
@@ -60,6 +79,32 @@ game_descriptions = {
     "Asymmetric Rock Paper Scissors": "**Asymmetric payoffs** where Player 1 gets standard payoffs but Player 2's are scaled (×0.7). Different incentive structures for each player. Tests behavior in non-symmetric games.",
 
     "Noisy Rock Paper Scissors": "**Stochastic variant** with Gaussian noise (σ=0.1) added to all payoffs. Same equilibrium as standard RPS but harder to learn due to noisy feedback. Tests robustness to uncertainty.",
+
+    "3-Player Prisoner's Dilemma": "**Classic social dilemma** extended to 3 players. Each player chooses Cooperate or Defect. Defecting is a **dominant strategy** (T=4 > R=3 > P=1 > S=0), creating a unique Nash equilibrium at all-defect [1,1,1] with payoff (1,1,1). Social optimum is all-cooperate [0,0,0] with payoff (3,3,3). Tests whether algorithms escape the tragedy of rational self-interest.",
+
+    "Public Goods Game": "**Contribution dilemma** where players choose to Contribute or Free-ride. Contributions are multiplied (×1.5) and shared equally, but individual contribution costs more than individual benefit. Free-riding dominates, yet collective contribution is optimal. Classic test of cooperation emergence.",
+
+    "Volunteer's Dilemma": "**Who will step up?** At least one player must volunteer (pay cost 2) for all to receive benefit 3, otherwise all get 0. Multiple asymmetric Nash equilibria where exactly one player volunteers. Tests equilibrium selection and fairness considerations. Will algorithms learn to take turns?",
+
+    "Majority Game": "**Conformity pressure** where players prefer to be in the majority. Choosing the same action as most others gives +2, minority gets -1. Two pure Nash equilibria at corners [0,0,0] and [1,1,1] where all coordinate. Tests bandwagon effects and coordination cascades.",
+
+    "Hawk-Dove Game": "**Contest over resources** (V=6, fighting cost C=10). Hawk fights for full resource, Dove shares peacefully. **Three pure Nash equilibria** where exactly one player plays Hawk (gets 6) and two play Dove (get 0). Neither all-Dove nor all-Hawk are stable. Also has symmetric mixed NE at ~56% Dove. Tests coordination on asymmetric roles.",
+
+    "Stag Hunt": "**Trust and coordination** where players choose safe Hare hunting (guaranteed 2) or risky Stag hunting (5 if all participate, 0 otherwise). Two Nash equilibria: all-hare (risk-dominant) and all-stag (payoff-dominant). Tests whether algorithms overcome coordination failures and achieve efficient outcomes.",
+
+    "Rock Paper Scissors Lizard Spock": "**Extended RPS with 5 actions** from The Big Bang Theory. Each action beats 2 others and loses to 2 others, creating richer cyclic dynamics than standard RPS. Unique Nash equilibrium at uniform mixing (1/5 each). More complex to learn, more interesting trajectories.",
+
+    "Rock Paper Scissors Well": "**4-action variant** where Well beats Rock & Scissors (contains them) but loses to Paper (covers it). Breaks RPS symmetry. Well is slightly stronger than Rock, creating asymmetric Nash equilibrium. Tests algorithm response to imbalanced action sets.",
+
+    "Cyclic Game (4 actions)": "**Generalized cycle** where action i beats action (i+1) mod 4 in a perfect chain: 0→1→2→3→0. Pure cyclic structure with uniform mixing equilibrium (1/4 each). Creates perpetual rotation in strategy space. Tests algorithm tracking of non-stationary patterns.",
+
+    "Cyclic Game (5 actions)": "**5-action perfect cycle** with finer-grained rotation than RPS. Action i beats (i+1) mod 5. Uniform mixing equilibrium (1/5 each). Slower cycling dynamics create smoother trajectories in pentagon simplex. Studies convergence speed vs cycle length.",
+
+    "Cyclic Game (6 actions)": "**6-action cycle** with even more gradual rotation. Tests whether algorithms can track longer cycles and whether convergence to uniform mixing improves with more actions. Interesting for studying multi-scale dynamics in strategy space.",
+
+    "Minority Game": "**Anti-coordination game** (El Farol Bar Problem). Players want to choose differently from opponent: matching gets -1, mismatching gets +1. NO Nash equilibrium in pure or mixed strategies! Leads to perpetual oscillations and potentially chaotic dynamics. Classic model of market inefficiency and bounded rationality.",
+
+    "Dispersion Game": "**3-action anti-coordination**. Like Minority Game but with 3 options. Players rewarded (+1) for choosing different actions than opponent, penalized (-1) for matching. No pure equilibrium. Tests dispersion behavior and whether algorithms can maintain diversity in action space.",
 }
 
 # Algorithm descriptions
@@ -93,6 +138,7 @@ else:
 st.sidebar.header("Simulation Settings")
 
 game_equilibria = {
+    # Box Games (3D) - format: (p1_action0, p2_action0, p3_action0, label)
     'Pure Coordination': [
         (1.0, 1.0, 1.0, 'NE1'), (1.0, 0.0, 0.0, 'NE2'),
         (0.0, 1.0, 0.0, 'NE3'), (0.0, 0.0, 1.0, 'NE4'),
@@ -103,7 +149,81 @@ game_equilibria = {
     ],
     'Matching Pennies with Twist': [(0.0, 0.5, 0.5, 'NE')],
     'Matching Pennies with Outside Option': [(0.5, 0.5, 0.5, 'NE')],
-    'Rock Paper Scissors': [(1/3, 1/3, 1.0/3)], # For player 1
+
+    # New Box Games
+    '3-Player Prisoner\'s Dilemma': [
+        (1.0, 1.0, 1.0, 'NE: All Defect (dominant)')
+    ],
+    'Public Goods Game': [
+        (1.0, 1.0, 1.0, 'NE: All Free-ride')  # Dominant strategy equilibrium
+    ],
+    'Volunteer\'s Dilemma': [
+        # Multiple asymmetric pure Nash equilibria (exactly one volunteers)
+        (0.0, 1.0, 1.0, 'NE: P1 volunteers'),
+        (1.0, 0.0, 1.0, 'NE: P2 volunteers'),
+        (1.0, 1.0, 0.0, 'NE: P3 volunteers'),
+    ],
+    'Majority Game': [
+        # Two pure Nash equilibria (all coordinate on same action)
+        (1.0, 1.0, 1.0, 'NE: All choose A'),
+        (0.0, 0.0, 0.0, 'NE: All choose B'),
+    ],
+    'Hawk-Dove Game': [
+        # Three pure Nash equilibria (exactly one Hawk, two Doves)
+        (1.0, 1.0, 0.0, 'NE: P3 Hawk, others Dove'),
+        (1.0, 0.0, 1.0, 'NE: P2 Hawk, others Dove'),
+        (0.0, 1.0, 1.0, 'NE: P1 Hawk, others Dove'),
+        # Plus symmetric mixed: P(Dove) ≈ 0.56
+        (0.56, 0.56, 0.56, 'NE: Symmetric mixed'),
+    ],
+    'Stag Hunt': [
+        # Two pure Nash equilibria
+        (1.0, 1.0, 1.0, 'NE: All Hare (risk-dom)'),
+        (0.0, 0.0, 0.0, 'NE: All Stag (payoff-dom)'),
+    ],
+}
+
+# RPS Games (2D n-gon) - format: (p1_probs, p2_probs, label)
+# Each entry is a tuple of (np.array for P1, np.array for P2, label)
+rps_equilibria = {
+    'Rock Paper Scissors': [
+        (np.array([1/3, 1/3, 1/3]), np.array([1/3, 1/3, 1/3]), 'NE: Uniform')
+    ],
+    'Biased Rock Paper Scissors': [
+        # Rock is stronger, so Paper (which beats Rock) is played more
+        (np.array([5/16, 6/16, 5/16]), np.array([5/16, 6/16, 5/16]), 'NE: More Paper')
+    ],
+    'Asymmetric Rock Paper Scissors': [
+        # Different equilibria for each player due to asymmetry
+        (np.array([1/3, 1/3, 1/3]), np.array([1/3, 1/3, 1/3]), 'NE: Approx uniform')
+    ],
+    'Noisy Rock Paper Scissors': [
+        (np.array([1/3, 1/3, 1/3]), np.array([1/3, 1/3, 1/3]), 'NE: Uniform')
+    ],
+    'Rock Paper Scissors Lizard Spock': [
+        (np.array([1/5, 1/5, 1/5, 1/5, 1/5]), np.array([1/5, 1/5, 1/5, 1/5, 1/5]), 'NE: Uniform')
+    ],
+    'Rock Paper Scissors Well': [
+        # Well is stronger, so equilibrium shifts
+        (np.array([0.22, 0.30, 0.22, 0.26]), np.array([0.22, 0.30, 0.22, 0.26]), 'NE: Well advantage')
+    ],
+    'Cyclic Game (4 actions)': [
+        (np.array([0.25, 0.25, 0.25, 0.25]), np.array([0.25, 0.25, 0.25, 0.25]), 'NE: Uniform')
+    ],
+    'Cyclic Game (5 actions)': [
+        (np.array([0.2, 0.2, 0.2, 0.2, 0.2]), np.array([0.2, 0.2, 0.2, 0.2, 0.2]), 'NE: Uniform')
+    ],
+    'Cyclic Game (6 actions)': [
+        (np.array([1/6, 1/6, 1/6, 1/6, 1/6, 1/6]), np.array([1/6, 1/6, 1/6, 1/6, 1/6, 1/6]), 'NE: Uniform')
+    ],
+    'Minority Game': [
+        # NO Nash equilibrium! But we can mark the center as reference
+        # (np.array([0.5, 0.5]), np.array([0.5, 0.5]), 'No NE (unstable)')
+    ],
+    'Dispersion Game': [
+        # NO pure Nash equilibrium, mixed is complex
+        # (np.array([1/3, 1/3, 1/3]), np.array([1/3, 1/3, 1/3]), 'No pure NE')
+    ],
 }
 
 
@@ -134,9 +254,20 @@ else:
 def is_rps_game(name):
     return "Rock Paper Scissors" in name
 
-def barycentric_to_cartesian(strategies):
-    v = np.array([[0, 0], [1, 0], [0.5, np.sqrt(3)/2]])
-    return np.dot(strategies, v)
+def barycentric_to_cartesian(strategies, n_actions=3):
+    """
+    Convert barycentric coordinates to 2D Cartesian coordinates for visualization.
+    For n actions, creates a regular n-gon.
+    """
+    if n_actions == 2:
+        # For 2 actions, just plot probability of first action
+        # Return as 2D for consistency
+        return np.column_stack([strategies[:, 0], strategies[:, 1]])
+
+    # For n >= 3, create regular n-gon vertices
+    angles = np.linspace(0, 2*np.pi, n_actions + 1)[:-1]  # n evenly spaced angles
+    vertices = np.column_stack([np.cos(angles), np.sin(angles)])
+    return np.dot(strategies, vertices)
 
 def create_rps_animation(trajectories, num_iterations, game_name):
     # ... (implementation from previous turn)
@@ -615,10 +746,11 @@ def create_comparison_animation(trajectories_dict, game_name, num_iterations):
 
     return gif_path
 
-def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterations):
+def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterations, n_actions=3, equilibria=None):
     """
     Create interactive vertically-stacked simplex plots for RPS game comparison using Plotly.
     Returns a Plotly figure object that can be displayed with st.plotly_chart().
+    Handles 2 to n actions with appropriate n-gon visualization.
     """
     # Create subplots: 2 rows, 1 column (vertical stack)
     fig = make_subplots(
@@ -628,12 +760,26 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
         vertical_spacing=0.15
     )
 
-    # Simplex triangle vertices in 2D
-    simplex_points = barycentric_to_cartesian(np.eye(3))
+    # Get action space vertices
+    simplex_points = barycentric_to_cartesian(np.eye(n_actions), n_actions)
 
-    # Add simplex triangles to both subplots
+    # Default to empty list if no equilibria provided
+    if equilibria is None:
+        equilibria = []
+
+    # Define labels based on game type
+    label_map = {
+        2: ["Option A", "Option B"],
+        3: ["Rock", "Paper", "Scissors"],
+        4: ["Rock", "Paper", "Scissors", "Well"],
+        5: ["Rock", "Paper", "Scissors", "Lizard", "Spock"],
+        6: ["A0", "A1", "A2", "A3", "A4", "A5"],  # Generic for cyclic games
+    }
+    labels = label_map.get(n_actions, [f"A{i}" for i in range(n_actions)])
+
+    # Add simplex/n-gon to both subplots
     for row in [1, 2]:
-        # Triangle filled area (white)
+        # n-gon filled area (white)
         fig.add_trace(go.Scatter(
             x=np.append(simplex_points[:, 0], simplex_points[0, 0]),
             y=np.append(simplex_points[:, 1], simplex_points[0, 1]),
@@ -645,18 +791,63 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
             hoverinfo='skip'
         ), row=row, col=1)
 
-        # Labels
-        labels = ["Rock", "Paper", "Scissors"]
-        offsets = [(-0.1, 0), (0.05, 0), (-0.05, 0.05)]
-        for i, (label, offset) in enumerate(zip(labels, offsets)):
+        # Labels at vertices
+        for i in range(n_actions):
+            # Compute offset based on vertex position
+            vertex = simplex_points[i]
+            offset_scale = 0.15
+            offset = vertex * offset_scale / np.linalg.norm(vertex) if np.linalg.norm(vertex) > 0 else np.array([0, offset_scale])
+
             fig.add_annotation(
                 x=simplex_points[i, 0] + offset[0],
                 y=simplex_points[i, 1] + offset[1],
-                text=label,
+                text=labels[i],
                 showarrow=False,
-                font=dict(size=12),
+                font=dict(size=10),
                 row=row, col=1
             )
+
+    # Add Nash Equilibria markers
+    if equilibria:
+        for eq_idx, eq_data in enumerate(equilibria):
+            p1_probs, p2_probs, eq_label = eq_data
+
+            # Convert to 2D coordinates
+            p1_coords = barycentric_to_cartesian(p1_probs.reshape(1, -1), n_actions)[0]
+            p2_coords = barycentric_to_cartesian(p2_probs.reshape(1, -1), n_actions)[0]
+
+            # Add P1 equilibrium marker (top subplot)
+            fig.add_trace(go.Scatter(
+                x=[p1_coords[0]],
+                y=[p1_coords[1]],
+                mode='markers',
+                marker=dict(
+                    size=15,
+                    color='gold',
+                    symbol='star',
+                    line=dict(color='black', width=1.5)
+                ),
+                name='Nash Equilibrium' if eq_idx == 0 else None,
+                showlegend=(eq_idx == 0),
+                legendgroup='equilibrium',
+                hovertemplate=f'{eq_label}<br>' + '<br>'.join([f'{labels[i]}: {p1_probs[i]:.3f}' for i in range(n_actions)]) + '<extra></extra>'
+            ), row=1, col=1)
+
+            # Add P2 equilibrium marker (bottom subplot)
+            fig.add_trace(go.Scatter(
+                x=[p2_coords[0]],
+                y=[p2_coords[1]],
+                mode='markers',
+                marker=dict(
+                    size=15,
+                    color='gold',
+                    symbol='star',
+                    line=dict(color='black', width=1.5)
+                ),
+                showlegend=False,
+                legendgroup='equilibrium',
+                hovertemplate=f'{eq_label}<br>' + '<br>'.join([f'{labels[i]}: {p2_probs[i]:.3f}' for i in range(n_actions)]) + '<extra></extra>'
+            ), row=2, col=1)
 
     # Prepare animation frames (every 10 steps for balanced performance)
     frame_indices = list(range(0, num_iterations, 10))
@@ -696,10 +887,49 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 yaxis='y' if row_idx == 0 else 'y2'
             ))
 
+        # Add equilibria to frames
+        if equilibria:
+            for eq_idx, eq_data in enumerate(equilibria):
+                p1_probs, p2_probs, eq_label = eq_data
+                p1_coords = barycentric_to_cartesian(p1_probs.reshape(1, -1), n_actions)[0]
+                p2_coords = barycentric_to_cartesian(p2_probs.reshape(1, -1), n_actions)[0]
+
+                # P1 equilibrium (top subplot)
+                frame_data.append(go.Scatter(
+                    x=[p1_coords[0]],
+                    y=[p1_coords[1]],
+                    mode='markers',
+                    marker=dict(size=15, color='gold', symbol='star', line=dict(color='black', width=1.5)),
+                    name='Nash Equilibrium' if eq_idx == 0 else None,
+                    showlegend=(eq_idx == 0),
+                    legendgroup='equilibrium',
+                    hovertemplate=f'{eq_label}<br>' + '<br>'.join([f'{labels[i]}: {p1_probs[i]:.3f}' for i in range(n_actions)]) + '<extra></extra>',
+                    xaxis='x',
+                    yaxis='y'
+                ))
+
+                # P2 equilibrium (bottom subplot)
+                frame_data.append(go.Scatter(
+                    x=[p2_coords[0]],
+                    y=[p2_coords[1]],
+                    mode='markers',
+                    marker=dict(size=15, color='gold', symbol='star', line=dict(color='black', width=1.5)),
+                    showlegend=False,
+                    legendgroup='equilibrium',
+                    hovertemplate=f'{eq_label}<br>' + '<br>'.join([f'{labels[i]}: {p2_probs[i]:.3f}' for i in range(n_actions)]) + '<extra></extra>',
+                    xaxis='x2',
+                    yaxis='y2'
+                ))
+
         # Add trajectories for each algorithm
         for algo_name, strategies in trajectories_dict.items():
             # Player 1 trajectory (top subplot)
-            coords1 = barycentric_to_cartesian(strategies[:t+1, 0, :])
+            coords1 = barycentric_to_cartesian(strategies[:t+1, 0, :], n_actions)
+
+            # Build hover template dynamically based on number of actions
+            hover_lines = [f'{algo_name}'] + [f'{labels[i]}: %{{customdata[{i}]:.3f}}' for i in range(n_actions)]
+            hover_template = '<br>'.join(hover_lines) + '<extra></extra>'
+
             frame_data.append(go.Scatter(
                 x=coords1[:, 0],
                 y=coords1[:, 1],
@@ -707,21 +937,21 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 line=dict(
                     color=algo_colors[algo_name],
                     width=2.5,
-                    shape='spline',
-                    smoothing=1.3
+                    shape='spline' if n_actions >= 3 else None,
+                    smoothing=1.3 if n_actions >= 3 else None
                 ),
                 marker=dict(size=3, opacity=0.8),
                 name=algo_name,
                 showlegend=True,
                 legendgroup=algo_name,
-                hovertemplate=f'{algo_name}<br>R: %{{customdata[0]:.3f}}<br>P: %{{customdata[1]:.3f}}<br>S: %{{customdata[2]:.3f}}<extra></extra>',
+                hovertemplate=hover_template,
                 customdata=strategies[:t+1, 0, :],
                 xaxis='x',
                 yaxis='y'
             ))
 
             # Player 2 trajectory (bottom subplot)
-            coords2 = barycentric_to_cartesian(strategies[:t+1, 1, :])
+            coords2 = barycentric_to_cartesian(strategies[:t+1, 1, :], n_actions)
             frame_data.append(go.Scatter(
                 x=coords2[:, 0],
                 y=coords2[:, 1],
@@ -729,14 +959,14 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
                 line=dict(
                     color=algo_colors[algo_name],
                     width=2.5,
-                    shape='spline',
-                    smoothing=1.3
+                    shape='spline' if n_actions >= 3 else None,
+                    smoothing=1.3 if n_actions >= 3 else None
                 ),
                 marker=dict(size=3, opacity=0.8),
                 name=algo_name,
                 showlegend=False,
                 legendgroup=algo_name,
-                hovertemplate=f'{algo_name}<br>R: %{{customdata[0]:.3f}}<br>P: %{{customdata[1]:.3f}}<br>S: %{{customdata[2]:.3f}}<extra></extra>',
+                hovertemplate=hover_template,
                 customdata=strategies[:t+1, 1, :],
                 xaxis='x2',
                 yaxis='y2'
@@ -746,8 +976,12 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
 
     # Add initial trajectories (t=0) to the figure
     for algo_name, strategies in trajectories_dict.items():
+        # Build hover template
+        hover_lines = [f'{algo_name}'] + [f'{labels[i]}: %{{customdata[{i}]:.3f}}' for i in range(n_actions)]
+        hover_template = '<br>'.join(hover_lines) + '<extra></extra>'
+
         # Player 1 initial point (top subplot)
-        coords1 = barycentric_to_cartesian(strategies[0:1, 0, :])
+        coords1 = barycentric_to_cartesian(strategies[0:1, 0, :], n_actions)
         fig.add_trace(go.Scatter(
             x=coords1[:, 0],
             y=coords1[:, 1],
@@ -755,18 +989,18 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
             line=dict(
                 color=algo_colors[algo_name],
                 width=2.5,
-                shape='spline',
-                smoothing=1.3
+                shape='spline' if n_actions >= 3 else None,
+                smoothing=1.3 if n_actions >= 3 else None
             ),
             marker=dict(size=3, opacity=0.8),
             name=algo_name,
             legendgroup=algo_name,
-            hovertemplate=f'{algo_name}<br>R: %{{customdata[0]:.3f}}<br>P: %{{customdata[1]:.3f}}<br>S: %{{customdata[2]:.3f}}<extra></extra>',
+            hovertemplate=hover_template,
             customdata=strategies[0:1, 0, :]
         ), row=1, col=1)
 
         # Player 2 initial point (bottom subplot)
-        coords2 = barycentric_to_cartesian(strategies[0:1, 1, :])
+        coords2 = barycentric_to_cartesian(strategies[0:1, 1, :], n_actions)
         fig.add_trace(go.Scatter(
             x=coords2[:, 0],
             y=coords2[:, 1],
@@ -774,14 +1008,14 @@ def create_comparison_animation_plotly(trajectories_dict, game_name, num_iterati
             line=dict(
                 color=algo_colors[algo_name],
                 width=2.5,
-                shape='spline',
-                smoothing=1.3
+                shape='spline' if n_actions >= 3 else None,
+                smoothing=1.3 if n_actions >= 3 else None
             ),
             marker=dict(size=3, opacity=0.8),
             name=algo_name,
             showlegend=False,
             legendgroup=algo_name,
-            hovertemplate=f'{algo_name}<br>R: %{{customdata[0]:.3f}}<br>P: %{{customdata[1]:.3f}}<br>S: %{{customdata[2]:.3f}}<extra></extra>',
+            hovertemplate=hover_template,
             customdata=strategies[0:1, 1, :]
         ), row=2, col=1)
 
@@ -1043,7 +1277,11 @@ else:  # RPS Games
             st.warning("Please select at least one algorithm to compare.")
         else:
             game_class = game_options[selected_game_name]
-            game = game_class()
+            # Handle lambda factories (for Cyclic games)
+            game = game_class() if callable(game_class) else game_class
+
+            # Get number of actions from game
+            n_actions = game.num_actions[0]
 
             trajectories_dict = {}
             for algo_name in selected_algos:
@@ -1052,16 +1290,42 @@ else:  # RPS Games
                 eta_config = {'initial_eta': 0.2, 'decay_rate': -0.5}
                 if algo_name in ['EXP3', 'Hedge']:
                     algorithm = algo_factory(game, num_iterations, eta_config)
-                    initial_scores = [np.array([1.5, -1.5, 0.0]), np.array([-1.0, 1.0, 0.0])]
+                    # Create initial scores based on number of actions
+                    if n_actions == 2:
+                        initial_scores = [np.array([1.5, -1.5]), np.array([-1.0, 1.0])]
+                    elif n_actions == 3:
+                        initial_scores = [np.array([1.5, -1.5, 0.0]), np.array([-1.0, 1.0, 0.0])]
+                    elif n_actions == 4:
+                        initial_scores = [np.array([1.5, -1.5, 0.5, -0.5]), np.array([-1.0, 1.0, -0.5, 0.5])]
+                    elif n_actions == 5:
+                        initial_scores = [np.array([1.5, -1.5, 0.5, -0.5, 0.3]), np.array([-1.0, 1.0, -0.5, 0.5, -0.3])]
+                    else:
+                        initial_scores = [np.random.randn(n_actions), np.random.randn(n_actions)]
                 else:  # Fictitious Play variants
                     algorithm = algo_factory(game, num_iterations)
-                    initial_scores = [np.array([5.0, 1.0, 1.0]), np.array([1.0, 5.0, 1.0])]
+                    # Create initial scores (counts) based on number of actions
+                    if n_actions == 2:
+                        initial_scores = [np.array([5.0, 1.0]), np.array([1.0, 5.0])]
+                    elif n_actions == 3:
+                        initial_scores = [np.array([5.0, 1.0, 1.0]), np.array([1.0, 5.0, 1.0])]
+                    elif n_actions == 4:
+                        initial_scores = [np.array([5.0, 1.0, 1.0, 1.0]), np.array([1.0, 5.0, 1.0, 1.0])]
+                    elif n_actions == 5:
+                        initial_scores = [np.array([5.0, 1.0, 1.0, 1.0, 1.0]), np.array([1.0, 5.0, 1.0, 1.0, 1.0])]
+                    else:
+                        p1_scores = np.ones(n_actions)
+                        p1_scores[0] = 5.0
+                        p2_scores = np.ones(n_actions)
+                        p2_scores[1 % n_actions] = 5.0
+                        initial_scores = [p1_scores, p2_scores]
 
                 algorithm.run(initial_scores=initial_scores)
                 trajectories_dict[algo_name] = np.array(algorithm.strategies)
 
             st.write("Generating interactive comparison animation...")
-            fig = create_comparison_animation_plotly(trajectories_dict, selected_game_name, num_iterations)
+            # Get equilibria for this game
+            equilibria = rps_equilibria.get(selected_game_name, [])
+            fig = create_comparison_animation_plotly(trajectories_dict, selected_game_name, num_iterations, n_actions, equilibria)
             st.plotly_chart(fig)
 
 if 'mode' not in st.session_state:
