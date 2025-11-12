@@ -2,3 +2,4 @@ numpy
 matplotlib
 imageio
 streamlit
+plotly
