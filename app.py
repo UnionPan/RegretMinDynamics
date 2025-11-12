@@ -940,7 +940,7 @@ if mode == "Box Games":
         # Generate 3D cube visualization for Box Games
         st.write("Generating interactive 3D animation...")
         fig = create_3d_cube_animation_plotly(trajectories, selected_game_name, selected_algo_name, equilibria=equilibria)
-        st.plotly_chart(fig, width='stretch', config={'responsive': True, 'displayModeBar': True, 'displaylogo': False})
+        st.plotly_chart(fig, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
 
         # Show additional information if requested
         if show_play_info:
@@ -1062,7 +1062,7 @@ else:  # RPS Games
 
             st.write("Generating interactive comparison animation...")
             fig = create_comparison_animation_plotly(trajectories_dict, selected_game_name, num_iterations)
-            st.plotly_chart(fig, width='stretch', config={'responsive': True, 'displayModeBar': True, 'displaylogo': False})
+            st.plotly_chart(fig, width='stretch', config={'displayModeBar': True, 'displaylogo': False})
 
 if 'mode' not in st.session_state:
     st.session_state.mode = "Box Games"
