@@ -1254,7 +1254,7 @@ if mode == "Box Games":
             fig_evolution.update_yaxes(title_text="P(Action 0)", range=[0, 1], row=1, col=3)
 
             fig_evolution.update_layout(height=400, hovermode='x unified', autosize=True)
-            st.plotly_chart(fig_evolution, width='stretch', config={'responsive': True, 'displayModeBar': True, 'displaylogo': False})
+            st.plotly_chart(fig_evolution)
 
 else:  # RPS Games
     selected_game_name = st.sidebar.selectbox("Choose a game", list(game_options.keys()))
