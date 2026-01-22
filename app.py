@@ -365,6 +365,27 @@ def create_3d_cube_animation(trajectories, game_name, algorithm_name, equilibria
 
                 lc = Line3DCollection(segments, colors=colors, linewidths=2)
                 ax.add_collection(lc)
+                last_intensity = intensities[-1]
+                arrow_color = (
+                    0.2 + 0.6 * (1 - last_intensity),
+                    0.4 + 0.4 * (1 - last_intensity),
+                    0.9,
+                    0.9,
+                )
+                dx = x[-1] - x[-2]
+                dy = y[-1] - y[-2]
+                dz = z[-1] - z[-2]
+                norm = np.linalg.norm([dx, dy, dz])
+                if norm > 0:
+                    scale = 0.08
+                    ux, uy, uz = (dx / norm) * scale, (dy / norm) * scale, (dz / norm) * scale
+                    ax.quiver(
+                        x[-2], y[-2], z[-2],
+                        ux, uy, uz,
+                        color=arrow_color,
+                        arrow_length_ratio=0.35,
+                        linewidth=1.2
+                    )
 
         filename = f'visualizations/frame_{t}.png'
         plt.savefig(filename, dpi=80, bbox_inches='tight')  # Reduced DPI for speed
@@ -724,8 +745,22 @@ def create_comparison_animation(trajectories_dict, game_name, num_iterations):
         for algo_name, strategies in trajectories_dict.items():
             coords1 = barycentric_to_cartesian(strategies[:t+1, 0, :])
             coords2 = barycentric_to_cartesian(strategies[:t+1, 1, :])
-            ax1.plot(coords1[:, 0], coords1[:, 1], linewidth=2, alpha=0.7, label=algo_name)
-            ax2.plot(coords2[:, 0], coords2[:, 1], linewidth=2, alpha=0.7, label=algo_name)
+            line1 = ax1.plot(coords1[:, 0], coords1[:, 1], linewidth=2, alpha=0.7, label=algo_name)[0]
+            line2 = ax2.plot(coords2[:, 0], coords2[:, 1], linewidth=2, alpha=0.7, label=algo_name)[0]
+            if len(coords1) > 1:
+                ax1.annotate(
+                    "",
+                    xy=(coords1[-1, 0], coords1[-1, 1]),
+                    xytext=(coords1[-2, 0], coords1[-2, 1]),
+                    arrowprops=dict(arrowstyle="-|>", color=line1.get_color(), lw=1.5, mutation_scale=10, alpha=0.8)
+                )
+            if len(coords2) > 1:
+                ax2.annotate(
+                    "",
+                    xy=(coords2[-1, 0], coords2[-1, 1]),
+                    xytext=(coords2[-2, 0], coords2[-2, 1]),
+                    arrowprops=dict(arrowstyle="-|>", color=line2.get_color(), lw=1.5, mutation_scale=10, alpha=0.8)
+                )
 
         ax1.legend()
         ax2.legend()

@@ -114,6 +114,27 @@ def plot_strategy_evolution(trajectories, game_name, algorithm_name, equilibria=
 
                 lc = Line3DCollection(segments, colors=colors, linewidths=2)
                 ax.add_collection(lc)
+                last_intensity = intensities[-1]
+                arrow_color = (
+                    0.2 + 0.6 * (1 - last_intensity),
+                    0.4 + 0.4 * (1 - last_intensity),
+                    0.9,
+                    0.9,
+                )
+                dx = x[-1] - x[-2]
+                dy = y[-1] - y[-2]
+                dz = z[-1] - z[-2]
+                norm = np.linalg.norm([dx, dy, dz])
+                if norm > 0:
+                    scale = 0.08
+                    ux, uy, uz = (dx / norm) * scale, (dy / norm) * scale, (dz / norm) * scale
+                    ax.quiver(
+                        x[-2], y[-2], z[-2],
+                        ux, uy, uz,
+                        color=arrow_color,
+                        arrow_length_ratio=0.35,
+                        linewidth=1.2
+                    )
 
         filename = f'visualizations/frame_{t}.png'
         plt.savefig(filename, dpi=80, bbox_inches='tight')  # Reduced DPI for speed
@@ -312,6 +333,7 @@ if __name__ == '__main__':
 
             trajectories = []
             for initial_scores in current_initial_scores:
+                initial_scores_copy = [np.array(scores, copy=True) for scores in initial_scores]
                 if alg_name == 'RegretMatching':
                     alg = alg_class(game, num_iterations)
                 elif alg_name == 'RegretMatchingSoftmax':
@@ -324,7 +346,7 @@ if __name__ == '__main__':
                     alg = alg_class(game, num_iterations, opt_ftrl_eta_config)
                 else:
                     alg = alg_class(game, num_iterations, eta_config)
-                alg.run(initial_scores=initial_scores)
+                alg.run(initial_scores=initial_scores_copy)
                 trajectories.append(alg.strategies)
 
             # Get equilibria for this game

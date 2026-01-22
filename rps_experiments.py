@@ -80,7 +80,8 @@ def run_rps_experiments(game_name='all', algorithm_name='all', num_iterations=30
                 init_scores = fp_initial_condition
 
             alg = alg_factory(game, num_iterations)
-            alg.run(initial_scores=init_scores)
+            init_scores_copy = [np.array(scores, copy=True) for scores in init_scores]
+            alg.run(initial_scores=init_scores_copy)
 
             # Extract player strategies
             # Convert to numpy array if needed
