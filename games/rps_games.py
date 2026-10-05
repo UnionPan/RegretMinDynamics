@@ -1,11 +1,14 @@
 import numpy as np
 
+from .base import Game
 
-class RockPaperScissors:
+
+class RockPaperScissors(Game):
     """
     Standard Rock Paper Scissors game.
     Actions: 0=Rock, 1=Paper, 2=Scissors
     """
+
     def __init__(self):
         self.num_players = 2
         self.num_actions = [3, 3]
@@ -15,11 +18,13 @@ class RockPaperScissors:
         self.payoff_matrix = np.zeros((3, 3, 2))
 
         # Player 1 payoffs (rows=P1 actions, cols=P2 actions)
-        p1_payoffs = np.array([
-            [ 0, -1,  1],  # Rock
-            [ 1,  0, -1],  # Paper
-            [-1,  1,  0]   # Scissors
-        ])
+        p1_payoffs = np.array(
+            [
+                [0, -1, 1],  # Rock
+                [1, 0, -1],  # Paper
+                [-1, 1, 0],  # Scissors
+            ]
+        )
 
         self.payoff_matrix[:, :, 0] = p1_payoffs
         self.payoff_matrix[:, :, 1] = -p1_payoffs  # Zero-sum game
@@ -29,11 +34,12 @@ class RockPaperScissors:
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class BiasedRockPaperScissors:
+class BiasedRockPaperScissors(Game):
     """
     Biased RPS where Rock is slightly stronger.
     Actions: 0=Rock, 1=Paper, 2=Scissors
     """
+
     def __init__(self, rock_bonus=0.2):
         self.num_players = 2
         self.num_actions = [3, 3]
@@ -44,18 +50,22 @@ class BiasedRockPaperScissors:
         self.payoff_matrix = np.zeros((3, 3, 2))
 
         # Base payoffs for Player 1
-        p1_payoffs = np.array([
-            [ 0, -1,  1 + rock_bonus],   # Rock (bonus when beating Scissors)
-            [ 1,  0, -1],                # Paper
-            [-1 - rock_bonus,  1,  0]    # Scissors (loses more to Rock)
-        ])
+        p1_payoffs = np.array(
+            [
+                [0, -1, 1 + rock_bonus],  # Rock (bonus when beating Scissors)
+                [1, 0, -1],  # Paper
+                [-1 - rock_bonus, 1, 0],  # Scissors (loses more to Rock)
+            ]
+        )
 
         # Player 2 payoffs (zero-sum, symmetric game)
-        p2_payoffs = np.array([
-            [ 0,  1, -1 - rock_bonus],   # When P1 plays Rock
-            [-1,  0,  1],                # When P1 plays Paper
-            [ 1 + rock_bonus, -1,  0]    # When P1 plays Scissors (Rock bonus applies)
-        ])
+        p2_payoffs = np.array(
+            [
+                [0, 1, -1 - rock_bonus],  # When P1 plays Rock
+                [-1, 0, 1],  # When P1 plays Paper
+                [1 + rock_bonus, -1, 0],  # When P1 plays Scissors (Rock bonus applies)
+            ]
+        )
 
         self.payoff_matrix[:, :, 0] = p1_payoffs
         self.payoff_matrix[:, :, 1] = p2_payoffs
@@ -65,7 +75,7 @@ class BiasedRockPaperScissors:
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class RockPaperScissorsLizardSpock:
+class RockPaperScissorsLizardSpock(Game):
     """
     Extended RPS with 5 options (Rock Paper Scissors Lizard Spock).
     Actions: 0=Rock, 1=Paper, 2=Scissors, 3=Lizard, 4=Spock
@@ -77,6 +87,7 @@ class RockPaperScissorsLizardSpock:
     - Lizard eats Paper and poisons Spock
     - Spock vaporizes Rock and smashes Scissors
     """
+
     def __init__(self):
         self.num_players = 2
         self.num_actions = [5, 5]
@@ -86,13 +97,15 @@ class RockPaperScissorsLizardSpock:
         self.payoff_matrix = np.zeros((5, 5, 2))
 
         # Player 1 payoffs - each action beats 2 others and loses to 2 others
-        p1_payoffs = np.array([
-            [ 0, -1,  1, 1, -1],  # Rock: beats Scissors, Lizard
-            [ 1,  0, -1, -1, 1],  # Paper: beats Rock, Spock
-            [-1,  1,  0, 1, -1],  # Scissors: beats Paper, Lizard
-            [-1,  1, -1, 0, 1],   # Lizard: beats Paper, Spock
-            [ 1, -1,  1, -1, 0]   # Spock: beats Rock, Scissors
-        ])
+        p1_payoffs = np.array(
+            [
+                [0, -1, 1, 1, -1],  # Rock: beats Scissors, Lizard
+                [1, 0, -1, -1, 1],  # Paper: beats Rock, Spock
+                [-1, 1, 0, 1, -1],  # Scissors: beats Paper, Lizard
+                [-1, 1, -1, 0, 1],  # Lizard: beats Paper, Spock
+                [1, -1, 1, -1, 0],  # Spock: beats Rock, Scissors
+            ]
+        )
 
         self.payoff_matrix[:, :, 0] = p1_payoffs
         self.payoff_matrix[:, :, 1] = -p1_payoffs  # Zero-sum game
@@ -102,11 +115,12 @@ class RockPaperScissorsLizardSpock:
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class AsymmetricRockPaperScissors:
+class AsymmetricRockPaperScissors(Game):
     """
     Asymmetric RPS where players have different payoff structures.
     Player 1 gets standard payoffs, Player 2 gets modified payoffs.
     """
+
     def __init__(self, p2_scale=0.7):
         self.num_players = 2
         self.num_actions = [3, 3]
@@ -117,11 +131,13 @@ class AsymmetricRockPaperScissors:
         self.payoff_matrix = np.zeros((3, 3, 2))
 
         # Standard payoff matrix for player 1
-        p1_payoffs = np.array([
-            [ 0, -1,  1],  # Rock
-            [ 1,  0, -1],  # Paper
-            [-1,  1,  0]   # Scissors
-        ])
+        p1_payoffs = np.array(
+            [
+                [0, -1, 1],  # Rock
+                [1, 0, -1],  # Paper
+                [-1, 1, 0],  # Scissors
+            ]
+        )
 
         # Scaled payoff matrix for player 2 (not quite zero-sum)
         p2_payoffs = -p1_payoffs * p2_scale
@@ -134,26 +150,32 @@ class AsymmetricRockPaperScissors:
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class RockPaperScissorsWithNoise:
+class RockPaperScissorsWithNoise(Game):
     """
     RPS where outcomes have some randomness (not fully deterministic).
     Win/loss probabilities are noisy.
     """
-    def __init__(self, noise_level=0.1):
+
+    def __init__(self, noise_level=0.1, rng=None):
         self.num_players = 2
         self.num_actions = [3, 3]
         self.noise_level = noise_level
+        if not np.isfinite(noise_level) or noise_level < 0:
+            raise ValueError("Noise scale must be finite and nonnegative.")
+        self.rng = np.random.default_rng() if rng is None else rng
         self.name = f"NoisyRPS_noise{noise_level}"
 
         # Base payoff matrix: [p1_action, p2_action, player]
         self.base_payoff_matrix = np.zeros((3, 3, 2))
 
         # Base payoffs for player 1
-        p1_payoffs = np.array([
-            [ 0, -1,  1],  # Rock
-            [ 1,  0, -1],  # Paper
-            [-1,  1,  0]   # Scissors
-        ])
+        p1_payoffs = np.array(
+            [
+                [0, -1, 1],  # Rock
+                [1, 0, -1],  # Paper
+                [-1, 1, 0],  # Scissors
+            ]
+        )
 
         self.base_payoff_matrix[:, :, 0] = p1_payoffs
         self.base_payoff_matrix[:, :, 1] = -p1_payoffs  # Zero-sum base
@@ -166,11 +188,15 @@ class RockPaperScissorsWithNoise:
         base_payoffs = self.base_payoff_matrix[actions[0], actions[1]].copy()
 
         # Add independent noise to each player
-        noise = np.random.normal(0, self.noise_level, size=2)
+        noise = self.rng.normal(0, self.noise_level, size=2)
         return base_payoffs + noise
 
+    @property
+    def expected_payoff_matrix(self):
+        return self.base_payoff_matrix
 
-class RockPaperScissorsWell:
+
+class RockPaperScissorsWell(Game):
     """
     Rock-Paper-Scissors-Well (4 actions)
     Actions: 0=Rock, 1=Paper, 2=Scissors, 3=Well
@@ -180,6 +206,7 @@ class RockPaperScissorsWell:
     - Well beats Rock and Scissors (contains them)
     - Paper beats Well (covers it)
     """
+
     def __init__(self):
         self.num_players = 2
         self.num_actions = [4, 4]
@@ -189,12 +216,14 @@ class RockPaperScissorsWell:
         self.payoff_matrix = np.zeros((4, 4, 2))
 
         # Player 1 payoffs
-        p1_payoffs = np.array([
-            [ 0, -1,  1, -1],  # Rock: beats Scissors, loses to Paper, Well
-            [ 1,  0, -1,  1],  # Paper: beats Rock, Well, loses to Scissors
-            [-1,  1,  0, -1],  # Scissors: beats Paper, loses to Rock, Well
-            [ 1, -1,  1,  0]   # Well: beats Rock, Scissors, loses to Paper
-        ])
+        p1_payoffs = np.array(
+            [
+                [0, -1, 1, -1],  # Rock: beats Scissors, loses to Paper, Well
+                [1, 0, -1, 1],  # Paper: beats Rock, Well, loses to Scissors
+                [-1, 1, 0, -1],  # Scissors: beats Paper, loses to Rock, Well
+                [1, -1, 1, 0],  # Well: beats Rock, Scissors, loses to Paper
+            ]
+        )
 
         self.payoff_matrix[:, :, 0] = p1_payoffs
         self.payoff_matrix[:, :, 1] = -p1_payoffs  # Zero-sum game
@@ -204,12 +233,13 @@ class RockPaperScissorsWell:
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class CyclicGame:
+class CyclicGame(Game):
     """
     Generalized Cyclic Game with n actions.
-    Action i beats action (i+1) mod n and loses to action (i-1) mod n.
+    Action i loses to action (i+1) mod n and beats action (i-1) mod n.
     Creates a perfect cycle.
     """
+
     def __init__(self, n_actions=4):
         self.num_players = 2
         self.num_actions = [n_actions, n_actions]
@@ -238,7 +268,7 @@ class CyclicGame:
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class MinorityGame:
+class MinorityGame(Game):
     """
     Minority Game (El Farol Bar Problem variant)
     2-player, 2-action game where players want to be in the minority.
@@ -246,9 +276,10 @@ class MinorityGame:
     Actions: 0=Option A, 1=Option B
     Payoff: +1 if in minority, -1 if in majority, 0 if tied
 
-    This game has no pure or mixed Nash equilibrium in the traditional sense,
-    leading to perpetual oscillations and potentially chaotic dynamics.
+    Both off-diagonal profiles are pure Nash equilibria.
+    Uniform mixing is also a mixed Nash equilibrium.
     """
+
     def __init__(self):
         self.num_players = 2
         self.num_actions = [2, 2]
@@ -261,15 +292,15 @@ class MinorityGame:
         # In 2-player version: different = good, same = bad
         self.payoff_matrix[0, 0] = [-1, -1]  # Both choose A - both penalized
         self.payoff_matrix[1, 1] = [-1, -1]  # Both choose B - both penalized
-        self.payoff_matrix[0, 1] = [1, 1]    # Different - both rewarded
-        self.payoff_matrix[1, 0] = [1, 1]    # Different - both rewarded
+        self.payoff_matrix[0, 1] = [1, 1]  # Different - both rewarded
+        self.payoff_matrix[1, 0] = [1, 1]  # Different - both rewarded
 
     def get_payoff(self, actions):
         """Returns payoffs for both players given their actions."""
         return self.payoff_matrix[actions[0], actions[1]]
 
 
-class DispersionGame:
+class DispersionGame(Game):
     """
     Dispersion Game (3 actions)
     Players prefer to choose different actions from opponent.
@@ -278,6 +309,7 @@ class DispersionGame:
     Actions: 0, 1, 2
     Payoff: Higher reward for choosing less popular option
     """
+
     def __init__(self):
         self.num_players = 2
         self.num_actions = [3, 3]

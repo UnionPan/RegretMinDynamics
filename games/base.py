@@ -1,6 +1,3 @@
-
-import numpy as np
-
 class Game:
     def __init__(self, payoff_matrix, num_players):
         self.payoff_matrix = payoff_matrix
@@ -9,3 +6,8 @@ class Game:
 
     def get_payoff(self, actions):
         return self.payoff_matrix[actions]
+
+    @property
+    def expected_payoff_matrix(self):
+        """Noise-free table for diagnostics, with no additional reward sampling."""
+        return self.payoff_matrix

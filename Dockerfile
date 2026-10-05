@@ -1,20 +1,22 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-buster
+FROM node:24-slim AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
 
-# Set the working directory in the container
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    MPLCONFIGDIR=/tmp/matplotlib
+
 WORKDIR /app
-
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip && pip install --no-cache-dir --progress-bar off --no-color -r requirements.txt
-
-# Make port 8501 available to the world outside this container
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+COPY --from=frontend /frontend/dist ./frontend/dist
+RUN useradd --create-home --uid 10001 appuser
+USER appuser
 EXPOSE 8501
-
-# Define environment variable
-ENV NAME World
-
-# Run app.py when the container launches
-CMD ["streamlit", "run", "app.py"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8501", "--workers", "1"]

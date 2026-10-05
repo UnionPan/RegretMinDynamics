@@ -1,6 +1,7 @@
-
 import numpy as np
+
 from .base import Game
+
 
 class PureCoordination(Game):
     def __init__(self):
@@ -15,6 +16,7 @@ class PureCoordination(Game):
         payoff_matrix[1, 1, 1] = [0, 0, 0]
         super().__init__(payoff_matrix, 3)
 
+
 class CoordinationWithSpectator(Game):
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
@@ -27,6 +29,7 @@ class CoordinationWithSpectator(Game):
         payoff_matrix[1, 1, 0] = [1, 1, 0]
         payoff_matrix[1, 1, 1] = [1, 1, 0]
         super().__init__(payoff_matrix, 3)
+
 
 class MatchingPenniesWithTwist(Game):
     def __init__(self):
@@ -41,6 +44,7 @@ class MatchingPenniesWithTwist(Game):
         payoff_matrix[1, 1, 1] = [0.1, 0, 1]
         super().__init__(payoff_matrix, 3)
 
+
 class MatchingPenniesWithOutsideOption(Game):
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
@@ -54,6 +58,7 @@ class MatchingPenniesWithOutsideOption(Game):
         payoff_matrix[1, 1, 1] = [-1, 1, -1]
         super().__init__(payoff_matrix, 3)
 
+
 class ThreePlayerPrisonersDilemma(Game):
     """
     3-Player Prisoner's Dilemma
@@ -61,6 +66,7 @@ class ThreePlayerPrisonersDilemma(Game):
     Defecting is a dominant strategy, but all better off if all cooperate.
     True PD: T > R > P > S (Temptation > Reward > Punishment > Sucker)
     """
+
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
 
@@ -82,6 +88,7 @@ class ThreePlayerPrisonersDilemma(Game):
 
         super().__init__(payoff_matrix, 3)
 
+
 class PublicGoodsGame(Game):
     """
     Public Goods Game
@@ -89,26 +96,15 @@ class PublicGoodsGame(Game):
     Contributions are multiplied (by 1.5) and shared equally.
     Individual contribution costs 1, but multiplied benefit is 0.5 per person.
     """
+
     def __init__(self, multiplier=1.5):
+        if not np.isfinite(multiplier):
+            raise ValueError("The public-goods multiplier must be finite.")
         payoff_matrix = np.zeros((2, 2, 2, 3))
-
-        # Nobody contributes
-        payoff_matrix[0, 0, 0] = [0, 0, 0]
-
-        # One contributes (costs 1, generates 1.5 shared = 0.5 each)
-        payoff_matrix[0, 0, 1] = [0.5, 0.5, -0.5]
-        payoff_matrix[0, 1, 0] = [0.5, -0.5, 0.5]
-        payoff_matrix[1, 0, 0] = [-0.5, 0.5, 0.5]
-
-        # Two contribute (cost 2, generate 3 shared = 1 each)
-        payoff_matrix[0, 1, 1] = [1, 0, 0]  # P1 free-rides
-        payoff_matrix[1, 0, 1] = [0, 1, 0]  # P2 free-rides
-        payoff_matrix[1, 1, 0] = [0, 0, 1]  # P3 free-rides
-
-        # All contribute (cost 3, generate 4.5 shared = 1.5 each, net = 0.5 each)
-        payoff_matrix[1, 1, 1] = [0.5, 0.5, 0.5]
-
+        for actions in np.ndindex(2, 2, 2):
+            payoff_matrix[actions] = multiplier * sum(actions) / 3 - np.asarray(actions)
         super().__init__(payoff_matrix, 3)
+
 
 class VolunteersDilemma(Game):
     """
@@ -117,6 +113,7 @@ class VolunteersDilemma(Game):
     If at least one volunteers (pays cost 2), everyone gets benefit 3.
     Otherwise everyone gets 0.
     """
+
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
 
@@ -138,6 +135,7 @@ class VolunteersDilemma(Game):
 
         super().__init__(payoff_matrix, 3)
 
+
 class MajorityGame(Game):
     """
     Majority Game
@@ -145,6 +143,7 @@ class MajorityGame(Game):
     Players prefer to be in the majority.
     Payoff = 2 if in majority, 0 if tied, -1 if in minority.
     """
+
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
 
@@ -162,25 +161,27 @@ class MajorityGame(Game):
 
         super().__init__(payoff_matrix, 3)
 
+
 class ThreePlayerHawkDove(Game):
     """
     3-Player Hawk-Dove Game
     Actions: 0=Dove, 1=Hawk
     Resource value = 6, fighting cost = 10
     - All Dove: share equally (2 each)
-    - All Hawk: fight, get negative payoff (-4 each)
+    - All Hawk: fight, get negative payoff (-4/3 each)
     - Mixed: Hawks split resource, Doves get nothing
     """
+
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
         V = 6  # Resource value
         C = 10  # Fighting cost
 
         # All Dove - share peacefully
-        payoff_matrix[0, 0, 0] = [V/3, V/3, V/3]
+        payoff_matrix[0, 0, 0] = [V / 3, V / 3, V / 3]
 
         # All Hawk - fight
-        payoff_matrix[1, 1, 1] = [(V-C)/3, (V-C)/3, (V-C)/3]
+        payoff_matrix[1, 1, 1] = [(V - C) / 3, (V - C) / 3, (V - C) / 3]
 
         # Two Doves, one Hawk - Hawk takes all
         payoff_matrix[0, 0, 1] = [0, 0, V]
@@ -188,11 +189,12 @@ class ThreePlayerHawkDove(Game):
         payoff_matrix[1, 0, 0] = [V, 0, 0]
 
         # One Dove, two Hawks - Hawks fight, Dove gets nothing
-        payoff_matrix[0, 1, 1] = [0, (V-C)/2, (V-C)/2]
-        payoff_matrix[1, 0, 1] = [(V-C)/2, 0, (V-C)/2]
-        payoff_matrix[1, 1, 0] = [(V-C)/2, (V-C)/2, 0]
+        payoff_matrix[0, 1, 1] = [0, (V - C) / 2, (V - C) / 2]
+        payoff_matrix[1, 0, 1] = [(V - C) / 2, 0, (V - C) / 2]
+        payoff_matrix[1, 1, 0] = [(V - C) / 2, (V - C) / 2, 0]
 
         super().__init__(payoff_matrix, 3)
+
 
 class StagHunt(Game):
     """
@@ -202,6 +204,7 @@ class StagHunt(Game):
     - Hunt hare: guaranteed 2
     - Stag hunt fails if anyone defects
     """
+
     def __init__(self):
         payoff_matrix = np.zeros((2, 2, 2, 3))
 

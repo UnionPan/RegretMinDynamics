@@ -1,9 +1,13 @@
 name: Deploy to Cloud Run
 
 on:
+  pull_request:
   push:
     branches:
       - main
+
+permissions:
+  contents: read
 
 env:
   PROJECT_ID: box-regret-ae01b8
@@ -12,17 +16,49 @@ env:
   REPO_NAME: regret-min-dynamics-repo
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+      - name: Verify frontend
+        run: |-
+          npm run test:coverage --prefix frontend
+          npm run build --prefix frontend
+      - name: Lint
+        run: ruff check .
+      - name: Test
+        run: python -m pytest --cov --cov-report=term-missing
+
   deploy:
+    needs: verify
+    if: github.event_name == 'push'
     name: Build and Deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v3
         with:
+          project_id: ${{ env.PROJECT_ID }}
           credentials_json: "${{ secrets.GCP_SA_KEY }}"
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
@@ -42,4 +78,6 @@ jobs:
             --platform=managed \
             --region=${{ env.REGION }} \
             --allow-unauthenticated \
+            --max-instances=1 \
+            --concurrency=16 \
             --port=8501
