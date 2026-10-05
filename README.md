@@ -18,6 +18,7 @@ uvicorn app:app --host 127.0.0.1 --port 8512
 ```
 
 Open `http://127.0.0.1:8512`.
+The health endpoint is `/health`, which avoids Cloud Run's reserved URL paths.
 For frontend development, run the API on port 8512 and `npm run dev --prefix frontend` in a second terminal.
 Vite proxies API requests to the Python server.
 

@@ -130,7 +130,7 @@ def create_app(store=None, limiter=None, engine=None, static_dir=None):
                 410, "This temporary experiment expired or was evicted. Run it again."
             ) from None
 
-    @application.get("/healthz")
+    @application.get("/health")
     def health():
         return {"status": "ok"}
 

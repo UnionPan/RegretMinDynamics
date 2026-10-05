@@ -191,3 +191,7 @@ Inspect real 3D and SVG playback in Safari and Chrome.
 - Known-vulnerability audits found none in the resolved runtime requirements and npm dependencies.
 - Docker is unavailable in this environment, so the container image was not built locally.
 - The user requested a commit and push after successful verification.
+- GitHub verification, Docker build, and Cloud Run deployment succeeded for `e4e8787`.
+- A live experiment rendered and replayed successfully without browser console errors.
+- The deployed health smoke check exposed Cloud Run's interception of `/healthz`.
+  The endpoint moved to `/health`, with API regression tests first reproducing the missing route.

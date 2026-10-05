@@ -81,3 +81,8 @@ jobs:
             --max-instances=1 \
             --concurrency=16 \
             --port=8501
+
+      - name: Verify deployed health endpoint
+        run: |-
+          TASK_SERVICE_URL=$(gcloud run services describe "${{ env.SERVICE_NAME }}" --region="${{ env.REGION }}" --format='value(status.url)')
+          curl --fail --show-error --retry 5 --retry-delay 2 "${TASK_SERVICE_URL}/health"

@@ -43,7 +43,7 @@ def test_uvicorn_entrypoint_exposes_health_endpoint():
     from app import app as entrypoint
 
     with TestClient(entrypoint) as connection:
-        response = connection.get("/healthz")
+        response = connection.get("/health")
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
@@ -485,7 +485,7 @@ def test_invalid_run_requests_are_also_rate_limited(tmp_path):
 def test_health_static_assets_and_api_errors_remain_separate(tmp_path):
     (tmp_path / "index.html").write_text("<html>React workspace</html>")
     with TestClient(create_app(static_dir=tmp_path)) as connection:
-        assert connection.get("/healthz").json() == {"status": "ok"}
+        assert connection.get("/health").json() == {"status": "ok"}
         assert "React workspace" in connection.get("/").text
         missing = connection.get("/api/missing")
         assert missing.status_code == 404
